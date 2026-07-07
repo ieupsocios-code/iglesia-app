@@ -8,6 +8,8 @@ import Cobradores    from './pages/Cobradores';
 import Cobranzas     from './pages/Cobranzas';
 import Reportes      from './pages/Reportes';
 import Usuarios      from './pages/Usuarios';
+import ImportarMiembros from './pages/ImportarMiembros';
+import Asamblea        from './pages/Asamblea';
 import Configuracion from './pages/Configuracion';
 import { useSupabase } from './hooks/useSupabase';
 import { useAuth }     from './hooks/useAuth';
@@ -20,7 +22,7 @@ export default function App() {
     data, loading, error, cargarTodo,
     agregarTemplo, eliminarTemplo,
     actualizarCuotas,
-    agregarMiembro, eliminarMiembro,
+    agregarMiembro, eliminarMiembro, agregarDeudaManual, generarDeudasAnio,
     agregarCobrador, eliminarCobrador,
     registrarCobranza, eliminarCobranza,
   } = useSupabase();
@@ -106,7 +108,7 @@ export default function App() {
         return <Dashboard data={data} />;
       case 'miembros':
         if (!puede.verTodo) return <AccesoDenegado />;
-        return <Miembros data={data} agregarMiembro={puede.gestionarMiembros ? agregarMiembro : null} eliminarMiembro={puede.gestionarMiembros ? eliminarMiembro : null} />;
+        return <Miembros data={data} agregarMiembro={puede.gestionarMiembros ? agregarMiembro : null} eliminarMiembro={puede.gestionarMiembros ? eliminarMiembro : null} agregarDeudaManual={puede.gestionarMiembros ? agregarDeudaManual : null} generarDeudasAnio={puede.gestionarMiembros ? generarDeudasAnio : null} />;
       case 'cobradores':
         if (!puede.verTodo) return <AccesoDenegado />;
         return <Cobradores data={data} agregarCobrador={puede.gestionarCobradores ? agregarCobrador : null} eliminarCobrador={puede.gestionarCobradores ? eliminarCobrador : null} />;
@@ -123,7 +125,13 @@ export default function App() {
       case 'usuarios':
         if (!puede.gestionarUsuarios) return <AccesoDenegado />;
         return <Usuarios data={data} />;
+      case 'asamblea':
+        return <Asamblea data={data} />;
+      case 'importar':
+        if (!puede.gestionarMiembros) return <AccesoDenegado />;
+        return <ImportarMiembros data={data} onImportado={() => { cargarTodo(); setTab('miembros'); }} />;
       case 'configuracion':
+
         if (!puede.configurar) return <AccesoDenegado />;
         return <Configuracion data={data} actualizarCuotas={actualizarCuotas} agregarTemplo={agregarTemplo} eliminarTemplo={eliminarTemplo} />;
       default:
