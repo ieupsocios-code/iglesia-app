@@ -8,6 +8,8 @@ const NAV = [
   { id: 'cobranzas',     icon: '◎', label: 'Cobranzas',      rol: ['admin','cobrador','consulta'] },
   { id: 'reportes',      icon: '▦', label: 'Reportes',       rol: ['admin','consulta'] },
   { id: 'usuarios',      icon: '◉', label: 'Usuarios',       rol: ['admin'] },
+  { id: 'importar',      icon: '⇪', label: 'Importar socios', rol: ['admin'] },
+  { id: 'asamblea',      icon: '🏛', label: 'Asamblea',       rol: ['admin','cobrador'] },
   { id: 'configuracion', icon: '◧', label: 'Configuración',  rol: ['admin'] },
 ];
 
@@ -142,6 +144,24 @@ export default function Sidebar({ tab, setTab, perfil, onSignOut }) {
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
+
+      {/* Siempre visible si el perfil no cargó */}
+      {!perfil && onSignOut && (
+        <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            onClick={onSignOut}
+            style={{
+              width: '100%', padding: '7px 12px',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: 7, color: 'rgba(255,255,255,0.5)',
+              fontSize: 12, cursor: 'pointer',
+            }}
           >
             Cerrar sesión
           </button>
