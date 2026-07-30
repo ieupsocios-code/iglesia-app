@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+
 // Carga todas las filas sin el límite de 1000 de Supabase
 async function cargarPaginado(tabla, opciones = {}) {
   const { order, orderAsc = false, select = '*' } = opciones;
