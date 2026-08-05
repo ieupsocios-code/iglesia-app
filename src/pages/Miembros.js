@@ -1,4 +1,4 @@
-// v5.0 - fix re-render en inputs
+// v5.0 - fix re-render en  inputs
 import React, { useState, useCallback } from 'react';
 import { Card, Badge, Button, Modal, FormField, Toast } from '../components/UI';
 import { categoriaSegunEdad, calcularEdad } from '../lib/categoriaUtils';
