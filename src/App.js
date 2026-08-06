@@ -104,10 +104,15 @@ export default function App() {
     switch (tabEfectivo) {
       case 'dashboard':
         return <Dashboard data={data} />;
-      case 'miembros':
-        if (!puede.verTodo) return <AccesoDenegado />;
-        return <Miembros data={data} agregarMiembro={puede.gestionarMiembros ? agregarMiembro : null} eliminarMiembro={puede.gestionarMiembros ? eliminarMiembro : null} />;
-      case 'cobradores':
+     case 'miembros':
+  if (!puede.verTodo) return <AccesoDenegado />;
+  return <Miembros data={data}
+    agregarMiembro={puede.gestionarMiembros ? agregarMiembro : null}
+    eliminarMiembro={puede.gestionarMiembros ? eliminarMiembro : null}
+    agregarDeudaManual={puede.gestionarMiembros ? agregarDeudaManual : null}
+    generarDeudasAnio={puede.gestionarMiembros ? generarDeudasAnio : null}
+  />;
+                         case 'cobradores':
         if (!puede.verTodo) return <AccesoDenegado />;
         return <Cobradores data={data} agregarCobrador={puede.gestionarCobradores ? agregarCobrador : null} eliminarCobrador={puede.gestionarCobradores ? eliminarCobrador : null} />;
       case 'cobranzas':
