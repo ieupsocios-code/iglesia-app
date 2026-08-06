@@ -46,16 +46,15 @@ export function useAuth() {
     setPerfil(null);
   };
 
-  // Permisos por rol
-  const puede = {
-    verTodo:          perfil?.rol === 'admin' || perfil?.rol === 'consulta',
-    gestionarMiembros: perfil?.rol === 'admin',
-    gestionarCobradores: perfil?.rol === 'admin',
-    registrarCobranza: perfil?.rol === 'admin' || perfil?.rol === 'cobrador',
-    eliminarCobranza:  perfil?.rol === 'admin',
-    configurar:        perfil?.rol === 'admin',
-    gestionarUsuarios: perfil?.rol === 'admin',
-  };
+ const puede = {
+  verTodo:             perfil?.rol === 'admin' || perfil?.rol === 'consulta',
+  gestionarMiembros:   perfil?.rol === 'admin',
+  gestionarCobradores: perfil?.rol === 'admin',
+  registrarCobranza:   perfil?.rol === 'admin' || perfil?.rol === 'cobrador',
+  eliminarCobranza:    perfil?.rol === 'admin',
+  configurar:          perfil?.rol === 'admin',
+  gestionarUsuarios:   perfil?.rol === 'admin',
+};
 
   return { session, perfil, loadingAuth, signIn, signOut, puede };
 }
