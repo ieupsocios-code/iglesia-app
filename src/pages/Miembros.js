@@ -520,9 +520,9 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
                                     </td>
                                     <td style={{ padding: '9px 14px' }}>
                                       <div style={{ display: 'flex', gap: 6 }}>
-                                        <Button size="sm" variant="ghost" onClick={() => abrirEditarDeuda(d)}>✎ Editar</Button>
-                                        <Button size="sm" variant="ghost" onClick={() => handleEliminarDeuda(d)}
-                                          style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}>✕</Button>
+                                        {agregarMiembro && <Button size="sm" variant="ghost" onClick={() => abrirEditarDeuda(d)}>✎ Editar</Button>}
+                                        {agregarMiembro && <Button size="sm" variant="ghost" onClick={() => handleEliminarDeuda(d)}
+                                          style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}>✕</Button>}
                                       </div>
                                     </td>
                                   </tr>
