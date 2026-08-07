@@ -1,4 +1,4 @@
-// v2.0 - consulta no puede cambiar contraseña
+// v2.0 - consulta no puede cambiar  contraseña
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Card, CardHeader, Button, FormField, Toast } from '../components/UI';
