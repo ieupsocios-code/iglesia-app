@@ -1,11 +1,17 @@
-// v5.0 - fix re-render en inputs
+// v6.0 - estado del socio (activo/trasladado/renunciado/fallecido)
 import React, { useState, useCallback } from 'react';
 import { Card, Badge, Button, Modal, FormField, Toast } from '../components/UI';
 import { categoriaSegunEdad, calcularEdad } from '../lib/categoriaUtils';
 import { supabase } from '../lib/supabaseClient';
 
+const ESTADO_CONFIG = {
+  activo:      { label: 'Activo',      bg: 'var(--success-bg)', color: 'var(--success)' },
+  trasladado:  { label: 'Trasladado',  bg: 'var(--gold-pale)',  color: 'var(--warning)' },
+  renunciado:  { label: 'Renunciado',  bg: 'var(--danger-bg)',  color: 'var(--danger)' },
+  fallecido:   { label: 'Fallecido',   bg: 'var(--gray-100)',   color: 'var(--gray-600)' },
+};
+
 // ── CamposForm FUERA del componente principal ─────────────
-// Esto evita que se recree en cada render y pierda el foco
 const CamposForm = React.memo(({ f, onChange, templos, configuracion, esEdit, onFechaNac }) => {
   const fmt = (n) => n?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
   const edad = f.fecha_nacimiento ? calcularEdad(f.fecha_nacimiento) : null;
@@ -47,12 +53,22 @@ const CamposForm = React.memo(({ f, onChange, templos, configuracion, esEdit, on
         </FormField>
       )}
 
-      <FormField label="Templo" required>
-        <select value={f.templo_id} onChange={e => onChange('templo_id', e.target.value)}>
-          <option value="">Seleccionar…</option>
-          {templos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-        </select>
-      </FormField>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <FormField label="Templo" required>
+          <select value={f.templo_id} onChange={e => onChange('templo_id', e.target.value)}>
+            <option value="">Seleccionar…</option>
+            {templos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          </select>
+        </FormField>
+        <FormField label="Estado del socio">
+          <select value={f.estado} onChange={e => onChange('estado', e.target.value)}>
+            <option value="activo">Activo</option>
+            <option value="trasladado">Trasladado</option>
+            <option value="renunciado">Renunciado</option>
+            <option value="fallecido">Fallecido</option>
+          </select>
+        </FormField>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <FormField label="Documento (DNI)">
@@ -148,6 +164,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
 
   const [filtroTemplo, setFiltro]     = useState('');
   const [filtroCat, setFiltroCat]     = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const [busqueda, setBusqueda]       = useState('');
   const [toast, setToast]             = useState(null);
   const [saving, setSaving]           = useState(false);
@@ -159,7 +176,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
     celular: '', email: '', domicilio: '', ciudad: '',
     provincia: '', nro_socio: '', ocupacion: '',
     sexo: '', estado_civil: '', nacionalidad: 'Argentina',
-    observacion: '',
+    observacion: '', estado: 'activo',
   };
 
   const [form, setForm]           = useState(formVacio);
@@ -174,7 +191,6 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
 
   const fmt = (n) => n?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
-  // ── Handlers con useCallback para evitar re-renders ──────
   const handleChangeForm = useCallback((campo, valor) => {
     setForm(f => ({ ...f, [campo]: valor }));
   }, []);
@@ -216,6 +232,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
         estado_civil:     form.estado_civil || null,
         nacionalidad:     form.nacionalidad || 'Argentina',
         observacion:      form.observacion || null,
+        estado:           form.estado || 'activo',
       });
       setForm(formVacio);
       setModalOpen(false);
@@ -227,7 +244,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
     }
   };
 
-  // ── Abrir editar miembro ──────────────────────────────────
+  // ── Abrir editar ──────────────────────────────────────────
   const abrirEditar = (m) => {
     setMiembroEditando(m);
     setFormEdit({
@@ -248,6 +265,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
       estado_civil:     m.estado_civil || '',
       nacionalidad:     m.nacionalidad || 'Argentina',
       observacion:      m.observacion || '',
+      estado:           m.estado || 'activo',
     });
     setModalEditar(true);
   };
@@ -275,6 +293,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
         estado_civil:     formEdit.estado_civil || null,
         nacionalidad:     formEdit.nacionalidad || 'Argentina',
         observacion:      formEdit.observacion || null,
+        estado:           formEdit.estado || 'activo',
       }).eq('id', miembroEditando.id);
       if (error) throw error;
       setModalEditar(false);
@@ -287,7 +306,6 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
     }
   };
 
-  // ── Eliminar miembro ──────────────────────────────────────
   const handleEliminar = async (m) => {
     if (!window.confirm(`¿Eliminar a ${m.nombre}?`)) return;
     try {
@@ -298,7 +316,6 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
     }
   };
 
-  // ── Agregar deuda ─────────────────────────────────────────
   const handleAgregarDeuda = async () => {
     if (!miembroDeuda || !formDeuda.anio || !formDeuda.importe) return;
     setSaving(true);
@@ -317,7 +334,6 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
     }
   };
 
-  // ── Editar deuda ──────────────────────────────────────────
   const abrirEditarDeuda = (deuda) => {
     setDeudaEditando(deuda);
     setFormEditDeuda({ importe: deuda.importe, saldo: deuda.saldo, pagado: deuda.pagado });
@@ -373,6 +389,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
   const filtrados = miembros
     .filter(m => !filtroTemplo || m.templo_id === parseInt(filtroTemplo))
     .filter(m => !filtroCat   || m.categoria === filtroCat)
+    .filter(m => !filtroEstado || (m.estado || 'activo') === filtroEstado)
     .filter(m => !busqueda    ||
       m.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
       m.documento?.includes(busqueda) ||
@@ -408,14 +425,21 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <input placeholder="Buscar nombre, documento o N° socio…" value={busqueda}
           onChange={e => setBusqueda(e.target.value)} style={{ width: 240 }} />
-        <select value={filtroTemplo} onChange={e => setFiltro(e.target.value)} style={{ width: 170 }}>
+        <select value={filtroTemplo} onChange={e => setFiltro(e.target.value)} style={{ width: 160 }}>
           <option value="">Todos los templos</option>
           {templos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
         </select>
-        <select value={filtroCat} onChange={e => setFiltroCat(e.target.value)} style={{ width: 150 }}>
+        <select value={filtroCat} onChange={e => setFiltroCat(e.target.value)} style={{ width: 140 }}>
           <option value="">Todas las categorías</option>
           <option value="mayor">Mayor</option>
           <option value="menor">Menor</option>
+        </select>
+        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ width: 150 }}>
+          <option value="">Todos los estados</option>
+          <option value="activo">Activo</option>
+          <option value="trasladado">Trasladado</option>
+          <option value="renunciado">Renunciado</option>
+          <option value="fallecido">Fallecido</option>
         </select>
       </div>
 
@@ -425,7 +449,7 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }}>
-                {['N° Socio','Nombre','Cat.','Edad','Templo','Años con deuda','Deuda total','Acciones'].map(h => (
+                {['N° Socio','Nombre','Cat.','Estado','Templo','Años con deuda','Deuda total','Acciones'].map(h => (
                   <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray-400)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -439,18 +463,21 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
                 const templo  = templos.find(t => t.id === m.templo_id);
                 const deuda   = deudaTotalMiembro(m.id);
                 const anios   = aniosPendientes(m.id);
-                const edad    = m.fecha_nacimiento ? calcularEdad(m.fecha_nacimiento) : null;
+                const estado  = m.estado || 'activo';
+                const ec      = ESTADO_CONFIG[estado] || ESTADO_CONFIG.activo;
                 const expandido = miembroExpandido === m.id;
                 return (
                   <React.Fragment key={m.id}>
-                    <tr style={{ borderBottom: expandido ? 'none' : '1px solid var(--gray-100)', background: expandido ? '#F0F2F8' : 'transparent' }}>
+                    <tr style={{ borderBottom: expandido ? 'none' : '1px solid var(--gray-100)', background: expandido ? '#F0F2F8' : 'transparent', opacity: estado === 'activo' ? 1 : 0.7 }}>
                       <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: 11, color: 'var(--gray-400)' }}>{m.nro_socio || '—'}</td>
                       <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--navy)' }}>{m.nombre}</td>
                       <td style={{ padding: '12px 14px' }}>
                         <Badge variant={m.categoria}>{m.categoria === 'mayor' ? 'Mayor' : 'Menor'}</Badge>
                       </td>
-                      <td style={{ padding: '12px 14px', fontSize: 12, color: 'var(--gray-600)' }}>
-                        {edad !== null ? `${edad} a.` : '—'}
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ background: ec.bg, color: ec.color, fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 99 }}>
+                          {ec.label}
+                        </span>
                       </td>
                       <td style={{ padding: '12px 14px', fontSize: 12, color: 'var(--gray-600)' }}>{templo?.nombre || '—'}</td>
                       <td style={{ padding: '12px 14px' }}>
@@ -543,14 +570,8 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
 
       {/* Modal NUEVO miembro */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Agregar nuevo miembro" width={560}>
-        <CamposForm
-          f={form}
-          onChange={handleChangeForm}
-          onFechaNac={handleFechaNacForm}
-          templos={templos}
-          configuracion={configuracion}
-          esEdit={false}
-        />
+        <CamposForm f={form} onChange={handleChangeForm} onFechaNac={handleFechaNacForm}
+          templos={templos} configuracion={configuracion} esEdit={false} />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
           <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancelar</Button>
           <Button onClick={handleGuardar} disabled={saving || !form.nombre.trim() || !form.templo_id}>
@@ -561,14 +582,8 @@ export default function Miembros({ data, agregarMiembro, eliminarMiembro, agrega
 
       {/* Modal EDITAR miembro */}
       <Modal open={modalEditar} onClose={() => setModalEditar(false)} title={`Editar — ${miembroEditando?.nombre}`} width={560}>
-        <CamposForm
-          f={formEdit}
-          onChange={handleChangeFormEdit}
-          onFechaNac={handleFechaNacEdit}
-          templos={templos}
-          configuracion={configuracion}
-          esEdit={true}
-        />
+        <CamposForm f={formEdit} onChange={handleChangeFormEdit} onFechaNac={handleFechaNacEdit}
+          templos={templos} configuracion={configuracion} esEdit={true} />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
           <Button variant="ghost" onClick={() => setModalEditar(false)}>Cancelar</Button>
           <Button variant="gold" onClick={handleGuardarEdicion} disabled={saving || !formEdit.nombre.trim() || !formEdit.templo_id}>
